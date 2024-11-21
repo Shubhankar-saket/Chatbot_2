@@ -6,7 +6,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing
 
-CALENDLY_API_TOKEN = "YOUR_CALENDLY_API_TOKEN_HERE"
+CALENDLY_API_TOKEN = "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzMyMTgzNTA1LCJqdGkiOiJkMGNkNGYyMi0wOGM0LTRhZmQtODc0Ni04MjY4ZDVhZjVlMzUiLCJ1c2VyX3V1aWQiOiJlMDM2MDhlOS1jYmUyLTQ1OTQtYTBmYy01YzVkNDc0MzBlMDcifQ.xWfMmcGLgXCFz90ibTxy_o2J_ht54eqnFhvyD36FgJaUrOLun6CkbiaVEpydlAN-PiahIOBEt6kSotlicP1q8g"
 
 # Convert time slot to ISO 8601 format
 def to_iso_format(time_slot):
