@@ -28,13 +28,13 @@ def get_doctor_availability(doctor_name):
 
 # Schedule appointment via Calendly
 def book_appointment_with_calendly(doctor_name, patient_name, time_slot_iso):
-    url = "https://api.calendly.com/event_invitees"  # Correct Calendly endpoint
+    url = "https://api.calendly.com/scheduled_events"  # Correct Calendly endpoint
     headers = {
         "Authorization": f"Bearer {CALENDLY_API_TOKEN}",
         "Content-Type": "application/json"
     }
     data = {
-        "event": "https://calendly.com/shubhankarsaket/doc-meeting",  # Replace with valid event type URI
+        "event": "https://api.calendly.com/users/e03608e9-cbe2-4594-a0fc-5c5d47430e07",  # Replace with valid event type URI
         "invitee": {
             "name": patient_name,
             "email": "patient@example.com"  # Replace with actual email
