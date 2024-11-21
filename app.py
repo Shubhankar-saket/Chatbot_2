@@ -1,13 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import spacy
 import requests
 
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing
-
-# Load NLP model
-nlp = spacy.load("en_core_web_sm")
 
 CALENDLY_API_TOKEN = "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzMxNzQ3MTUyLCJqdGkiOiI5OWVlNjA1Yy0wMDJiLTQ2Y2EtOTdjMi1lOTdhMWFkODJkMjUiLCJ1c2VyX3V1aWQiOiJlMDM2MDhlOS1jYmUyLTQ1OTQtYTBmYy01YzVkNDc0MzBlMDcifQ.uzjWHlBGyydpdn41ynOZluX2X2E_KieiDOL3s3Ilwxgim1W6_K1--LVgdD0ZDyq3avo7AUHgZSvItwk8R_Mt3A"
 
@@ -50,7 +46,7 @@ def chatbot():
     message = data.get("message", "").lower()  # Extract user's message
     response_text = "Sorry, I didn't understand that."  # Default response
 
-    # Basic intent recognition (example implementation)
+    # Basic intent recognition (simple keyword matching)
     if "availability" in message:
         doctor_name = "Dr. Alice Johnson"  # Default doctor for demo
         availability = get_doctor_availability(doctor_name)
