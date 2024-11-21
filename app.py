@@ -34,7 +34,7 @@ def book_appointment_with_calendly(doctor_name, patient_name, time_slot_iso):
         "Content-Type": "application/json"
     }
     data = {
-        "event": "https://api.calendly.com/event_types/XXXXXXXXX",  # Replace with valid event type URI
+        "event": "https://calendly.com/shubhankarsaket/doc-meeting",  # Replace with valid event type URI
         "invitee": {
             "name": patient_name,
             "email": "patient@example.com"  # Replace with actual email
