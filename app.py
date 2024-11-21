@@ -28,7 +28,7 @@ def get_doctor_availability(doctor_name):
 
 # Schedule appointment via Calendly
 def book_appointment_with_calendly(doctor_name, patient_name, time_slot_iso):
-    url = "https://api.calendly.com/scheduled_events"  # Correct Calendly endpoint
+    url = "https://api.calendly.com/event_invitees"  # Correct Calendly endpoint
     headers = {
         "Authorization": f"Bearer {CALENDLY_API_TOKEN}",
         "Content-Type": "application/json"
