@@ -1,11 +1,22 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)  # Enable Cross-Origin Resource Sharing
 
-CALENDLY_API_TOKEN = "eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzMyMTgzNTA1LCJqdGkiOiJkMGNkNGYyMi0wOGM0LTRhZmQtODc0Ni04MjY4ZDVhZjVlMzUiLCJ1c2VyX3V1aWQiOiJlMDM2MDhlOS1jYmUyLTQ1OTQtYTBmYy01YzVkNDc0MzBlMDcifQ.xWfMmcGLgXCFz90ibTxy_o2J_ht54eqnFhvyD36FgJaUrOLun6CkbiaVEpydlAN-PiahIOBEt6kSotlicP1q8g"
+CALENDLY_API_TOKEN = "YOUR_CALENDLY_API_TOKEN_HERE"
+
+# Convert time slot to ISO 8601 format
+def to_iso_format(time_slot):
+    try:
+        # Convert "10:00 AM" to ISO 8601 format
+        time_obj = datetime.strptime(time_slot, "%I:%M %p")
+        iso_format = datetime.combine(datetime.today(), time_obj.time()).isoformat()
+        return iso_format + "Z"  # Append 'Z' for UTC
+    except ValueError:
+        return None  # Return None if format is invalid
 
 # Mock doctor availability for demo purposes
 def get_doctor_availability(doctor_name):
@@ -16,54 +27,94 @@ def get_doctor_availability(doctor_name):
     return mock_availability.get(doctor_name, [])
 
 # Schedule appointment via Calendly
-def book_appointment_with_calendly(doctor_name, patient_name, time_slot):
-    url = "https://api.calendly.com/scheduled_events"
-    headers = {"Authorization": f"Bearer {CALENDLY_API_TOKEN}"}
-    data = {
-        "doctor_name": doctor_name,
-        "patient_name": patient_name,
-        "time_slot": time_slot
+def book_appointment_with_calendly(doctor_name, patient_name, time_slot_iso):
+    url = "https://api.calendly.com/event_invitees"  # Correct Calendly endpoint
+    headers = {
+        "Authorization": f"Bearer {CALENDLY_API_TOKEN}",
+        "Content-Type": "application/json"
     }
+    data = {
+        "event": "https://api.calendly.com/event_types/XXXXXXXXX",  # Replace with valid event type URI
+        "invitee": {
+            "name": patient_name,
+            "email": "patient@example.com"  # Replace with actual email
+        }
+    }
+
     response = requests.post(url, headers=headers, json=data)
+
     if response.status_code == 201:
         return {"message": "Appointment booked successfully"}
-    return {"error": "Failed to book appointment"}
+    else:
+        return {
+            "error": f"Failed to book appointment. Status: {response.status_code}, Response: {response.text}"
+        }
+
+# Cancel appointment via Calendly (if needed)
+def cancel_appointment(appointment_id):
+    url = f"https://api.calendly.com/scheduled_events/{appointment_id}/cancel"
+    headers = {"Authorization": f"Bearer {CALENDLY_API_TOKEN}"}
+    response = requests.post(url, headers=headers)
+
+    if response.status_code == 204:
+        return {"message": "Appointment canceled successfully"}
+    else:
+        return {
+            "error": f"Failed to cancel appointment. Status: {response.status_code}, Response: {response.text}"
+        }
 
 # Reschedule appointment via Calendly
-def reschedule_appointment(appointment_id, new_time_slot):
-    url = f"https://api.calendly.com/scheduled_events/{appointment_id}/reschedule"
-    headers = {"Authorization": f"Bearer {CALENDLY_API_TOKEN}"}
-    data = {"new_time_slot": new_time_slot}
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        return {"message": "Appointment rescheduled successfully"}
-    return {"error": "Failed to reschedule"}
+def reschedule_appointment(appointment_id, new_time_slot_iso):
+    cancel_result = cancel_appointment(appointment_id)
+    if "error" in cancel_result:
+        return cancel_result
+
+    # Book new appointment with the updated time slot
+    # Replace "Doctor Name" and "Patient Name" with appropriate values
+    return book_appointment_with_calendly("Dr. Alice Johnson", "John Doe", new_time_slot_iso)
 
 # Chatbot API
 @app.route('/chat', methods=['POST'])
 def chatbot():
     data = request.json  # Receive JSON payload from the frontend
-    message = data.get("message", "").lower()  # Extract user's message
+    message = data.get("message", "").lower()
     response_text = "Sorry, I didn't understand that."  # Default response
 
-    # Basic intent recognition (simple keyword matching)
-    if "availability" in message:
-        doctor_name = "Dr. Alice Johnson"  # Default doctor for demo
-        availability = get_doctor_availability(doctor_name)
-        response_text = f"{doctor_name} is available at: {', '.join(availability)}"
-    
-    elif "book appointment" in message:
-        doctor_name = data.get("doctor_name", "Dr. Alice Johnson")
-        patient_name = data.get("patient_name", "John Doe")
-        time_slot = data.get("time_slot", "10:00 AM")
-        result = book_appointment_with_calendly(doctor_name, patient_name, time_slot)
-        response_text = result.get("message", result.get("error"))
+    try:
+        # Handle availability request
+        if "availability" in message:
+            doctor_name = data.get("doctor_name", "Dr. Alice Johnson")
+            availability = get_doctor_availability(doctor_name)
+            response_text = f"{doctor_name} is available at: {', '.join(availability)}"
 
-    elif "reschedule appointment" in message:
-        appointment_id = data.get("appointment_id")
-        new_time_slot = data.get("new_time_slot")
-        result = reschedule_appointment(appointment_id, new_time_slot)
-        response_text = result.get("message", result.get("error"))
+        # Handle appointment booking
+        elif "book appointment" in message:
+            doctor_name = data.get("doctor_name", "Dr. Alice Johnson")
+            patient_name = data.get("patient_name", "John Doe")
+            time_slot = data.get("time_slot", "10:00 AM")
+            time_slot_iso = to_iso_format(time_slot)
+
+            if not time_slot_iso:
+                response_text = "Invalid time slot format. Please provide a valid time (e.g., '10:00 AM')."
+            else:
+                result = book_appointment_with_calendly(doctor_name, patient_name, time_slot_iso)
+                response_text = result.get("message", result.get("error"))
+
+        # Handle appointment rescheduling
+        elif "reschedule appointment" in message:
+            appointment_id = data.get("appointment_id")
+            new_time_slot = data.get("new_time_slot")
+            new_time_slot_iso = to_iso_format(new_time_slot)
+
+            if not appointment_id or not new_time_slot_iso:
+                response_text = "Please provide both appointment_id and a valid new_time_slot."
+            else:
+                result = reschedule_appointment(appointment_id, new_time_slot_iso)
+                response_text = result.get("message", result.get("error"))
+
+    except Exception as e:
+        print("Error:", str(e))  # Log the error for debugging
+        response_text = "An error occurred while processing your request."
 
     return jsonify({"response": response_text})
 
